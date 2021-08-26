@@ -1,9 +1,12 @@
 """ paul vim config
 call plug#begin('~/.vim/plugged')
 
-Plug 'git@github.com:cocopon/iceberg.vim.git'
+Plug 'git@github.com:folke/tokyonight.nvim.git', { 'branch': 'main' }
+" Plug 'git@github.com:cocopon/iceberg.vim.git'
 
 Plug 'git@github.com:tpope/vim-commentary.git'
+
+Plug 'git@github.com:windwp/nvim-autopairs.git'
 
 Plug 'git@github.com:easymotion/vim-easymotion.git'
 
@@ -13,7 +16,12 @@ Plug 'git@github.com:preservim/nerdtree.git'
 
 Plug 'git@github.com:junegunn/fzf.git', { 'do': { -> fzf#install() } }
 
-Plug 'git@github.com:neoclide/coc.nvim.git', {}
+Plug 'git@github.com:neovim/nvim-lspconfig.git'
+Plug 'git@github.com:hrsh7th/nvim-cmp.git'
+Plug 'git@github.com:hrsh7th/cmp-nvim-lsp.git'
+Plug 'git@github.com:hrsh7th/cmp-buffer.git'
+Plug 'git@github.com:hrsh7th/vim-vsnip.git'
+Plug 'git@github.com:kabouzeid/nvim-lspinstall.git'
 
 Plug 'git@github.com:rust-lang/rust.vim.git'
 
@@ -60,8 +68,8 @@ filetype plugin indent on
 """ keymaps
 let mapleader = ',' 
 
-nnoremap j gj
-nnoremap k g
+" nnoremap j gj
+" nnoremap k gk
 nnoremap q :<C-u>close<CR>
 
 " window 
@@ -87,109 +95,119 @@ nnoremap <leader>p "+p
 nnoremap sg :<C-u>sp<CR>
 nnoremap sv :<C-u>vsp<CR>
 
+nnoremap -- :<C-U>FZF<CR>
+tnoremap <Esc> <C-\><C-n>
+
+nnoremap <silent> <Leader>t :<C-u>sb +terminal <CR>
+nnoremap <silent> <leader>w- :<C-u>res -10 <CR>
+nnoremap <silent> <leader>w= :<C-u>res 10 <CR>
+
+imap jj <Esc>
+
 set background=dark
-colorscheme iceberg
+let g:tokyonight_style = "night"
+colorscheme tokyonight
 
-""" coc configuration
+"""
+lua <<EOF
 
-" Use tab for trigger completion with characters ahead and navigate.
-" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
-" other plugin before putting this into your config.
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+  -- nvim-cmp setup
+  local cmp = require 'cmp'
+  cmp.setup {
+    snippet = {
+      expand = function(args)
+        -- You must install `vim-vsnip` if you use the following as-is.
+        vim.fn['vsnip#anonymous'](args.body)
+      end,
+    },
+    mapping = {
+      ['<C-p>'] = cmp.mapping.select_prev_item(),
+      ['<C-n>'] = cmp.mapping.select_next_item(),
+      ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+      ['<C-f>'] = cmp.mapping.scroll_docs(4),
+      ['<C-Space>'] = cmp.mapping.complete(),
+      ['<C-e>'] = cmp.mapping.close(),
+    },
+    sources = {
+      { name = 'nvim_lsp' },
+      { name = 'buffer' },
+    },
+  }
 
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~# '\s'
-endfunction
+  require('nvim-autopairs').setup{}
+  require("nvim-autopairs.completion.cmp").setup({
+    map_cr = true, --map <CR> on insert mode
+    map_complete = true, --it will auto insert `(` after select function or method item
+  })
 
-" Use <c-space> to trigger completion.
-inoremap <silent><expr> <c-space> coc#refresh()
+  -- nvim lsp config
+  local nvim_lsp = require('lspconfig')
+  -- Use an on_attach function to only map the following keys
+  -- after the language server attaches to the current buffer
+  local on_attach = function(client, bufnr)
+    local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+    local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
-" Make <CR> auto-select the first completion item and notify coc.nvim to
-" format on enter, <cr> could be remapped by other vim plugin
-inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
-                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+    -- Enable completion triggered by <c-x><c-o>
+    buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
 
-" Use `[g` and `]g` to navigate diagnostics
-" Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
-nmap <silent> [g <Plug>(coc-diagnostic-prev)
-nmap <silent> ]g <Plug>(coc-diagnostic-next)
+    -- Mappings.
+    local opts = { noremap=true, silent=true }
 
-" GoTo code navigation.
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gy <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
+    -- See `:help vim.lsp.*` for documentation on any of the below functions
+    buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
+    buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
+    buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
+    buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
+    buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
+    buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
+    --buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
+    --buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
+    buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
+    buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
+    buf_set_keymap('n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
+    buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
+    buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
+    buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
+    buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
+    buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
+    buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
+  end
 
-" Use K to show documentation in preview window.
-nnoremap <silent> K :call <SID>show_documentation()<CR>
+  -- Add additional capabilities supported by nvim-cmp
+  local capabilities = vim.lsp.protocol.make_client_capabilities()
+  capabilities.textDocument.completion.completionItem.snippetSupport = true
+  capabilities.textDocument.completion.completionItem.preselectSupport = true
+  capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
+  capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
+  capabilities.textDocument.completion.completionItem.deprecatedSupport = true
+  capabilities.textDocument.completion.completionItem.commitCharactersSupport = true
+  capabilities.textDocument.completion.completionItem.tagSupport = { valueSet = { 1 } }
+  capabilities.textDocument.completion.completionItem.resolveSupport = {
+    properties = {
+      'documentation',
+      'detail',
+      'additionalTextEdits',
+    },
+  }
 
-function! s:show_documentation()
-  if (index(['vim','help'], &filetype) >= 0)
-    execute 'h '.expand('<cword>')
-  elseif (coc#rpc#ready())
-    call CocActionAsync('doHover')
-  else
-    execute '!' . &keywordprg . " " . expand('<cword>')
-  endif
-endfunction
+  -- lsp install 
+  require'lspinstall'.setup() -- important
+  local servers = require'lspinstall'.installed_servers()
+  for _, server in pairs(servers) do
+    nvim_lsp[server].setup{
+      on_attach = on_attach,
+      flags = {
+        debounce_text_changes = 150,
+      },
+      capabilities = capabilities,
+    }
+  end
 
-" Highlight the symbol and its references when holding the cursor.
-autocmd CursorHold * silent call CocActionAsync('highlight')
-
-" Symbol renaming.
-nmap <leader>rn <Plug>(coc-rename)
-
-" Formatting selected code.
-xmap <leader>f  <Plug>(coc-format-selected)
-nmap <leader>f  <Plug>(coc-format-selected)
-
-augroup mygroup
-  autocmd!
-  " Setup formatexpr specified filetype(s).
-  autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
-  " Update signature help on jump placeholder.
-  autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
-augroup end
-
-" Applying codeAction to the selected region.
-" Example: `<leader>aap` for current paragraph
-xmap <leader>a  <Plug>(coc-codeaction-selected)
-nmap <leader>a  <Plug>(coc-codeaction-selected)
-
-" Remap keys for applying codeAction to the current buffer.
-nmap <leader>ac  <Plug>(coc-codeaction)
-" Apply AutoFix to problem on the current line.
-nmap <leader>qf  <Plug>(coc-fix-current)
-
-" Map function and class text objects
-" NOTE: Requires 'textDocument.documentSymbol' support from the language server.
-xmap if <Plug>(coc-funcobj-i)
-omap if <Plug>(coc-funcobj-i)
-xmap af <Plug>(coc-funcobj-a)
-omap af <Plug>(coc-funcobj-a)
-xmap ic <Plug>(coc-classobj-i)
-omap ic <Plug>(coc-classobj-i)
-xmap ac <Plug>(coc-classobj-a)
-omap ac <Plug>(coc-classobj-a)
-
-" Add `:Format` command to format current buffer.
-command! -nargs=0 Format :call CocAction('format')
-
-" Add `:Fold` command to fold current buffer.
-command! -nargs=? Fold :call     CocAction('fold', <f-args>)
-
-" Add `:OR` command for organize imports of the current buffer.
-command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
-
-" Add (Neo)Vim's native statusline support.
-" NOTE: Please see `:h coc-status` for integrations with external plugins that
-" provide custom statusline: lightline.vim, vim-airline.
-set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
+EOF
 
 """ tagbar
 nmap <F8> :TagbarToggle<CR>
+
+""" auto save format rust
+let g:rustfmt_autosave = 1 
