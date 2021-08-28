@@ -22,8 +22,10 @@ Plug 'git@github.com:hrsh7th/cmp-nvim-lsp.git'
 Plug 'git@github.com:hrsh7th/cmp-buffer.git'
 Plug 'git@github.com:hrsh7th/vim-vsnip.git'
 Plug 'git@github.com:kabouzeid/nvim-lspinstall.git'
+Plug 'https://github.com/tzachar/cmp-tabnine.git'
 
 Plug 'git@github.com:rust-lang/rust.vim.git'
+Plug 'git@github.com:cespare/vim-toml.git'
 
 Plug 'git@github.com:vim-airline/vim-airline.git'
 Plug 'git@github.com:vim-airline/vim-airline-themes.git'
@@ -129,15 +131,25 @@ lua <<EOF
       ['<C-e>'] = cmp.mapping.close(),
     },
     sources = {
+      { name = 'cmp_tabnine' },
       { name = 'nvim_lsp' },
       { name = 'buffer' },
     },
   }
 
+  -- auto pairs
   require('nvim-autopairs').setup{}
   require("nvim-autopairs.completion.cmp").setup({
     map_cr = true, --map <CR> on insert mode
     map_complete = true, --it will auto insert `(` after select function or method item
+  })
+
+  -- tabnine
+  local tabnine = require('cmp_tabnine.config')
+  tabnine:setup({
+    max_lines = 1000;
+    max_num_results = 20;
+    sort = true;
   })
 
   -- nvim lsp config
@@ -168,8 +180,8 @@ lua <<EOF
     buf_set_keymap('n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
     buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
     buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
-    buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
-    buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
+    buf_set_keymap('n', '[g', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
+    buf_set_keymap('n', ']g', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
     buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
     buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
   end
@@ -208,6 +220,8 @@ EOF
 
 """ tagbar
 nmap <F8> :TagbarToggle<CR>
+
+nmap <F9> :e ~/.local/share/nvim/site/init.vim<CR>
 
 """ auto save format rust
 let g:rustfmt_autosave = 1 
