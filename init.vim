@@ -23,6 +23,7 @@ Plug 'git@github.com:hrsh7th/cmp-buffer.git'
 Plug 'git@github.com:hrsh7th/vim-vsnip.git'
 Plug 'git@github.com:kabouzeid/nvim-lspinstall.git'
 Plug 'https://github.com/tzachar/cmp-tabnine.git'
+Plug 'git@github.com:onsails/lspkind-nvim.git' 
 
 Plug 'git@github.com:rust-lang/rust.vim.git'
 Plug 'git@github.com:cespare/vim-toml.git'
@@ -112,7 +113,15 @@ colorscheme tokyonight
 
 """
 lua <<EOF
-
+  local source_mapping = {
+    buffer = "[Buffer]",
+    nvim_lsp = "[LSP]",
+    nvim_lua = "[Lua]",
+    cmp_tabnine = "[TN]",
+    path = "[Path]",
+    calc = "[calc]",
+  }
+  local lspkind = require('lspkind')
   -- nvim-cmp setup
   local cmp = require 'cmp'
   cmp.setup {
@@ -130,10 +139,25 @@ lua <<EOF
       ['<C-Space>'] = cmp.mapping.complete(),
       ['<C-e>'] = cmp.mapping.close(),
     },
+    formatting = {
+      format = function(entry, vim_item)
+        vim_item.kind = lspkind.presets.default[vim_item.kind]
+        local menu = source_mapping[entry.source.name]
+        if entry.source.name == 'cmp_tabnine' then
+          if entry.completion_item.data ~= nil and entry.completion_item.data.detail ~= nil then
+            menu = entry.completion_item.data.detail .. ' ' .. menu
+          end
+          vim_item.kind = '[]'
+        end
+        vim_item.menu = menu
+        return vim_item
+      end
+    },  
     sources = {
       { name = 'cmp_tabnine' },
       { name = 'nvim_lsp' },
       { name = 'buffer' },
+      { name = 'path' },
     },
   }
 
