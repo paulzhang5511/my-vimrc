@@ -3,6 +3,8 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'git@github.com:folke/tokyonight.nvim.git', { 'branch': 'main' }
 " Plug 'git@github.com:cocopon/iceberg.vim.git'
+"
+Plug 'git@github.com:tpope/vim-surround.git'
 
 Plug 'git@github.com:tpope/vim-commentary.git'
 
@@ -16,17 +18,37 @@ Plug 'git@github.com:preservim/nerdtree.git'
 
 Plug 'git@github.com:junegunn/fzf.git', { 'do': { -> fzf#install() } }
 
+" auto complete + lsp + tabnine
 Plug 'git@github.com:neovim/nvim-lspconfig.git'
 Plug 'git@github.com:hrsh7th/nvim-cmp.git'
 Plug 'git@github.com:hrsh7th/cmp-nvim-lsp.git'
 Plug 'git@github.com:hrsh7th/cmp-buffer.git'
-Plug 'git@github.com:hrsh7th/vim-vsnip.git'
 Plug 'git@github.com:kabouzeid/nvim-lspinstall.git'
 Plug 'https://github.com/tzachar/cmp-tabnine.git'
-Plug 'git@github.com:onsails/lspkind-nvim.git' 
+" snippet
+Plug 'git@github.com:hrsh7th/vim-vsnip.git'
+Plug 'git@github.com:rafamadriz/friendly-snippets.git'
 
+" language hightlight
 Plug 'git@github.com:rust-lang/rust.vim.git'
 Plug 'git@github.com:cespare/vim-toml.git'
+Plug 'git@github.com:udalov/kotlin-vim.git'
+Plug 'git@github.com:pangloss/vim-javascript.git'
+Plug 'git@github.com:MaxMEllon/vim-jsx-pretty.git'
+
+" emmet
+Plug 'git@github.com:mattn/emmet-vim.git'
+
+" git
+Plug 'git@github.com:tpope/vim-fugitive.git'
+
+" indent
+Plug 'git@github.com:Yggdroot/indentLine.git'
+
+" post install (yarn install | npm install) then load plugin only for editing supported files
+Plug 'git@github.com:prettier/vim-prettier.git', {
+  \ 'do': 'yarn install',
+  \ 'for': ['javascript', 'javascriptreact', 'typescript', 'css', 'scss', 'json', 'markdown', 'vue', 'yaml', 'html'] }
 
 Plug 'git@github.com:vim-airline/vim-airline.git'
 Plug 'git@github.com:vim-airline/vim-airline-themes.git'
@@ -66,6 +88,10 @@ set updatetime=300
 set shortmess+=c
 set signcolumn=yes
 
+" 80 charset 
+set textwidth=80
+set colorcolumn=+1
+
 filetype plugin indent on
 
 """ keymaps
@@ -90,10 +116,6 @@ nnoremap <Space>bp :<C-u>bprevious<CR>
 nnoremap <C-s> :<C-u>w!<CR>
 nnoremap <Leader>s :<C-u>w!<CR>
 
-" system clipboard
-vnoremap <leader>y "+y 
-nnoremap <leader>p "+p
-
 " split screen
 nnoremap sg :<C-u>sp<CR>
 nnoremap sv :<C-u>vsp<CR>
@@ -116,12 +138,9 @@ lua <<EOF
   local source_mapping = {
     buffer = "[Buffer]",
     nvim_lsp = "[LSP]",
-    nvim_lua = "[Lua]",
     cmp_tabnine = "[TN]",
     path = "[Path]",
-    calc = "[calc]",
   }
-  local lspkind = require('lspkind')
   -- nvim-cmp setup
   local cmp = require 'cmp'
   cmp.setup {
@@ -141,14 +160,7 @@ lua <<EOF
     },
     formatting = {
       format = function(entry, vim_item)
-        vim_item.kind = lspkind.presets.default[vim_item.kind]
         local menu = source_mapping[entry.source.name]
-        if entry.source.name == 'cmp_tabnine' then
-          if entry.completion_item.data ~= nil and entry.completion_item.data.detail ~= nil then
-            menu = entry.completion_item.data.detail .. ' ' .. menu
-          end
-          vim_item.kind = '[]'
-        end
         vim_item.menu = menu
         return vim_item
       end
@@ -247,5 +259,23 @@ nmap <F8> :TagbarToggle<CR>
 
 nmap <F9> :e ~/.local/share/nvim/site/init.vim<CR>
 
+nnoremap <leader>n :NERDTreeFocus<CR>
+nnoremap <A-1> :NERDTreeToggle<CR>
+
 """ auto save format rust
 let g:rustfmt_autosave = 1 
+
+"""  prettier format
+" issue: https://github.com/prettier/vim-prettier/issues/191 
+let g:prettier#autoformat = 1
+let g:prettier#autoformat_require_pragma = 0
+
+""" emmet 
+let g:user_emmet_install_global = 0
+let g:user_emmet_settings = {
+\  'javascript.jsx' : {
+\      'extends' : 'jsx',
+\  },
+\}
+autocmd FileType html,css,javascript,javascript.jsx EmmetInstall
+
