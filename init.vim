@@ -15,6 +15,7 @@ Plug 'git@github.com:easymotion/vim-easymotion.git'
 Plug 'git@github.com:mg979/vim-visual-multi.git'
 
 Plug 'git@github.com:preservim/nerdtree.git'
+Plug 'git@github.com:ryanoasis/vim-devicons.git'
 
 Plug 'git@github.com:junegunn/fzf.git', { 'do': { -> fzf#install() } }
 
@@ -34,7 +35,10 @@ Plug 'git@github.com:rust-lang/rust.vim.git'
 Plug 'git@github.com:cespare/vim-toml.git'
 Plug 'git@github.com:udalov/kotlin-vim.git'
 Plug 'git@github.com:pangloss/vim-javascript.git'
+" jsx
 Plug 'git@github.com:MaxMEllon/vim-jsx-pretty.git'
+" vue
+Plug 'git@github.com:posva/vim-vue.git'
 
 " emmet
 Plug 'git@github.com:mattn/emmet-vim.git'
@@ -43,7 +47,9 @@ Plug 'git@github.com:mattn/emmet-vim.git'
 Plug 'git@github.com:tpope/vim-fugitive.git'
 
 " indent
-Plug 'git@github.com:Yggdroot/indentLine.git'
+Plug 'git@github.com:lukas-reineke/indent-blankline.nvim.git'
+"Plug 'git@github.com:Yggdroot/indentLine.git'
+" Plug 'git@github.com:thaerkh/vim-indentguides.git'
 
 " post install (yarn install | npm install) then load plugin only for editing supported files
 Plug 'git@github.com:prettier/vim-prettier.git', {
@@ -117,8 +123,10 @@ nnoremap <C-s> :<C-u>w!<CR>
 nnoremap <Leader>s :<C-u>w!<CR>
 
 " split screen
+set splitright
 nnoremap sg :<C-u>sp<CR>
 nnoremap sv :<C-u>vsp<CR>
+
 
 nnoremap -- :<C-U>FZF<CR>
 tnoremap <Esc> <C-\><C-n>
@@ -126,6 +134,9 @@ tnoremap <Esc> <C-\><C-n>
 nnoremap <silent> <Leader>t :<C-u>sb +terminal <CR>
 nnoremap <silent> <leader>w- :<C-u>res -10 <CR>
 nnoremap <silent> <leader>w= :<C-u>res 10 <CR>
+
+vnoremap <Leader>y "+y
+vnoremap <Leader>c "+c
 
 imap jj <Esc>
 
@@ -252,6 +263,12 @@ lua <<EOF
     }
   end
 
+  --indent
+  require("indent_blankline").setup {
+    char = "┆",
+    buftype_exclude = {"terminal"}
+  }
+
 EOF
 
 """ tagbar
@@ -277,5 +294,4 @@ let g:user_emmet_settings = {
 \      'extends' : 'jsx',
 \  },
 \}
-autocmd FileType html,css,javascript,javascript.jsx EmmetInstall
-
+autocmd FileType html,css,javascript,javascript.jsx,vue EmmetInstall
