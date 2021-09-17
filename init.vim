@@ -1,9 +1,12 @@
+set runtimepath+=~/code/vim-amake
 """ paul vim config
 call plug#begin('~/.vim/plugged')
 
+Plug 'git@github.com:mhinz/vim-startify.git'
+Plug 'git@github.com:joshdick/onedark.vim.git'
 Plug 'git@github.com:folke/tokyonight.nvim.git', { 'branch': 'main' }
 " Plug 'git@github.com:cocopon/iceberg.vim.git'
-"
+
 Plug 'git@github.com:tpope/vim-surround.git'
 
 Plug 'git@github.com:tpope/vim-commentary.git'
@@ -31,6 +34,7 @@ Plug 'git@github.com:hrsh7th/vim-vsnip.git'
 Plug 'git@github.com:rafamadriz/friendly-snippets.git'
 
 " language hightlight
+Plug 'git@github.com:nvim-treesitter/nvim-treesitter.git'
 Plug 'git@github.com:rust-lang/rust.vim.git'
 Plug 'git@github.com:cespare/vim-toml.git'
 Plug 'git@github.com:udalov/kotlin-vim.git'
@@ -61,6 +65,8 @@ Plug 'git@github.com:vim-airline/vim-airline-themes.git'
 let g:airline#extensions#tabline#enabled = 1
 
 Plug 'git@github.com:preservim/tagbar.git'
+
+" Plug 'git@github.com:paulzhang5511/vim-im-select.git'
 
 call plug#end()
 
@@ -136,13 +142,13 @@ nnoremap <silent> <leader>w- :<C-u>res -10 <CR>
 nnoremap <silent> <leader>w= :<C-u>res 10 <CR>
 
 vnoremap <Leader>y "+y
-vnoremap <Leader>c "+c
+nnoremap <Leader>p "+p
 
 imap jj <Esc>
 
 set background=dark
 let g:tokyonight_style = "night"
-colorscheme tokyonight
+colorscheme onedark 
 
 """
 lua <<EOF
@@ -178,6 +184,7 @@ lua <<EOF
     },  
     sources = {
       { name = 'cmp_tabnine' },
+      { name = 'vsnip' },
       { name = 'nvim_lsp' },
       { name = 'buffer' },
       { name = 'path' },
@@ -295,3 +302,15 @@ let g:user_emmet_settings = {
 \  },
 \}
 autocmd FileType html,css,javascript,javascript.jsx,vue EmmetInstall
+imap <expr> <tab> emmet#expandAbbrIntelligent("\<tab>")
+
+" snippet
+" Expand or jump
+imap <expr> <C-l>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-l>'
+smap <expr> <C-l>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-l>'
+
+" vue hightlight
+let g:vue_pre_processors = []
+
+" nerdtree
+autocmd BufWinEnter * if getcmdwintype() == '' | silent NERDTreeMirror | endif
